@@ -1,0 +1,68 @@
+{
+    "0": {
+        "id_cc": 1,
+        "acceso_id": "QN_CP_21",
+        "nombre_comercial_acceso": "INGRESO EL COMERCIO",
+        "piso": "Planta Baja"
+    },
+    "1": {
+        "id_cc": 1,
+        "acceso_id": "QN_CP_23",
+        "nombre_comercial_acceso": "INGRESO DE PRATI EX B",
+        "piso": "Planta Baja"
+    },
+    "2": {
+        "id_cc": 1,
+        "acceso_id": "QN_CP_24",
+        "nombre_comercial_acceso": "INGRESO DE PRATI EX A",
+        "piso": "Planta Baja"
+    },
+    "3": {
+        "id_cc": 1,
+        "acceso_id": "QN_CP_29",
+        "nombre_comercial_acceso": "INGRESO FYBECA",
+        "piso": "Subsuelo 1"
+    },
+    "4": {
+        "id_cc": 1,
+        "acceso_id": "QN_CP_18",
+        "nombre_comercial_acceso": "INGRESO MARATHON A",
+        "piso": "Planta Baja"
+    },
+    "5": {
+        "id_cc": 1,
+        "acceso_id": "QN_CP_14",
+        "nombre_comercial_acceso": "INGRESO SUB SUELO 3",
+        "piso": "Subsuelo 3"
+    },
+    "9": {
+        "id_cc": 1,
+        "acceso_id": "QN_CP_19",
+        "nombre_comercial_acceso": "INGRESO CENTRAL SUB SUELO 1",
+        "piso": "Subsuelo 1"
+    },
+    "10": {
+        "id_cc": 1,
+        "acceso_id": "QN_CP32",
+        "nombre_comercial_acceso": "INGRESO 6 DE DICIEMBRE",
+        "piso": "Planta Baja"
+    },
+    "12": {
+        "id_cc": 1,
+        "acceso_id": "QN_CP_6",
+        "nombre_comercial_acceso": "INGRESO DUNKIN DONUTS EX",
+        "piso": "Planta Baja"
+    },
+    "13": {
+        "id_cc": 1,
+        "acceso_id": "QN_CP_2",
+        "nombre_comercial_acceso": "INGRESO KFC EX",
+        "piso": "Planta Baja"
+    },
+    "14": {
+        "id_cc": 1,
+        "acceso_id": "QN_CP_1",
+        "nombre_comercial_acceso": "INGRESO DE LOS SHYRIS",
+        "piso": "Planta Baja"
+    }
+}
