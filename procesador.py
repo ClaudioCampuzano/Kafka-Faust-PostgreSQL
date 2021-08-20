@@ -1,8 +1,11 @@
 import psycopg2
 import faust
-from datetime import datetime
-from concurrent.futures import ThreadPoolExecutor
+import pandas as pd
 import json
+import pytz
+
+from datetime import datetime, timedelta
+from concurrent.futures import ThreadPoolExecutor
 
 param_dic = {
     "host": "-",
@@ -13,10 +16,10 @@ param_dic = {
 
 app = faust.App(
     "ETL",
-    broker='kafka://-:-',
+    broker='kafka://-:9092',
     value_serializer='json',
 )
-test_topic = app.topic("pruebascrack")
+test_topic = app.topic("-")
 
 thread_pool = ThreadPoolExecutor(max_workers=1)
 
@@ -26,6 +29,8 @@ with open("camaras_info.json") as jsonFile:
 
 listDisaggregatedRecords = []
 setCameraId = set()
+
+guayaquil = pytz.timezone('America/Guayaquil')
 
 
 @app.agent(test_topic)
@@ -46,10 +51,17 @@ async def streamUnbundler(events):
         setCameraId.add(event["lc_person"]["camera_id"])
 
 
-@app.timer(90.0)
+@app.timer(300.0)
 async def loadTopostgreSQL():
     global thread_pool
     app.loop.run_in_executor(thread_pool, insert_data)
+
+
+@app.crontab('0 5 * * *', timezone=guayaquil)
+async def EveryDay_at_5_am():
+    global thread_pool
+    app.loop.run_in_executor(thread_pool, generateCSV)
+
 
 def connect(params_dic):
     conn = None
@@ -86,6 +98,7 @@ def insert_data():
     else:
         print("Sin data")
 
+
 def recordGenerator(recordStreams):
     global setCameraId
     listRecord = []
@@ -111,4 +124,42 @@ def getInfoCam(camId):
         return(jsonCamInfo[str(camId)]['id_cc'], date, time, jsonCamInfo[str(camId)]['acceso_id'], jsonCamInfo[str(camId)]['nombre_comercial_acceso'], jsonCamInfo[str(camId)]['piso'])
     except:
         return("-1", date, time, "---", "---", "---")
+
+
+def postgresql_to_dataframe(conn, select_query, column_names):
+    cursor = conn.cursor()
+    try:
+        cursor.execute(select_query)
+    except (Exception, psycopg2.DatabaseError) as error:
+        print("Error: %s" % error)
+        cursor.close()
+        return 1
+
+    # Naturally we get a list of tupples
+    tupples = cursor.fetchall()
+    cursor.close()
+
+    # We just need to turn it into a pandas dataframe
+    df = pd.DataFrame(tupples, columns=column_names)
+    return df
+
+
+def generateCSV():
+    global param_dic
+    conn = connect(param_dic)
+    yesterday = (datetime.now() - timedelta(1))
+    column_names = ["rd_id", "id_cc", "fecha", "hora", "acceso_id",
+                    "nombre_comercial_acceso", "piso", "ins", "outs", ]
+    try:
+        df = postgresql_to_dataframe(
+            conn, "select * from test_dk_crack where fecha='"+yesterday.strftime("%m/%d/%Y")+"'", column_names)
+        df.to_csv('dk_'+yesterday.strftime("%m_%d_%Y")+'.csv', index=False)
+        print("CSV generated")
+
+    except (Exception) as error:
+        print(error)
+    finally:
+        if conn is not None:
+            conn.close()
+
 
