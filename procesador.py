@@ -148,7 +148,7 @@ def generateCSV():
     global param_dic
     conn = connect(param_dic)
     yesterday = (datetime.now() - timedelta(1))
-    column_names = ["rd_id", "id_cc", "fecha", "hora", "acceso_id",
+    column_names = ["id_cc", "fecha", "hora", "acceso_id",
                     "nombre_comercial_acceso", "piso", "ins", "outs", ]
     try:
         df = postgresql_to_dataframe(
