@@ -7,6 +7,9 @@ import pytz
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
 
+from psycopg2 import extras
+from psycopg2 import sql
+
 param_dic = {
     "host": "-",
     "database": "-",
@@ -16,22 +19,23 @@ param_dic = {
 
 app = faust.App(
     "ETL",
-    broker='kafka://-:9092',
+    broker='kafka://-:-',
     value_serializer='json',
 )
 test_topic = app.topic("-")
 
-thread_pool = ThreadPoolExecutor(max_workers=1)
+thread_pool = ThreadPoolExecutor(max_workers=None)
 
 with open("camaras_info.json") as jsonFile:
     jsonCamInfo = json.load(jsonFile)
     jsonFile.close()
 
 listDisaggregatedRecords = []
+listRecordStandby = []
 setCameraId = set()
 
 guayaquil = pytz.timezone('America/Guayaquil')
-
+tableName='-'
 
 @app.agent(test_topic)
 async def streamUnbundler(events):
@@ -56,12 +60,10 @@ async def loadTopostgreSQL():
     global thread_pool
     app.loop.run_in_executor(thread_pool, insert_data)
 
-
 @app.crontab('0 5 * * *', timezone=guayaquil)
 async def EveryDay_at_5_am():
     global thread_pool
     app.loop.run_in_executor(thread_pool, generateCSV)
-
 
 def connect(params_dic):
     conn = None
@@ -69,35 +71,41 @@ def connect(params_dic):
         # connect to the PostgreSQL server
         conn = psycopg2.connect(**params_dic)
     except (Exception, psycopg2.DatabaseError) as error:
-        print(error)
+        print(end=" ")
     #print("Connection successful PostgreSQL")
     return conn
 
 
 def insert_data():
 
-    global listDisaggregatedRecords, param_dic
+    global listDisaggregatedRecords, param_dic, listRecordStandby, tableName
     listRecordInsert = recordGenerator(listDisaggregatedRecords)
     listDisaggregatedRecords = []
 
-    if len(listRecordInsert) != 0:
-        print("Insertando data...")
-        sqlQuery = """INSERT INTO test_dk_crack(id_cc, fecha, hora, acceso_id, nombre_comercial_acceso, piso, ins, outs) VALUES(%s,%s,%s,%s,%s,%s,%s,%s);"""
+    if len(listRecordInsert) != 0 or len(listRecordStandby) != 0:
+        queryText = "INSERT INTO {table}(id_cc, fecha, hora, acceso_id, nombre_comercial_acceso, piso, ins, outs) VALUES %s;"
         try:
             conn = connect(param_dic)
+            if conn is None:
+                raise ValueError('Error when trying to connect to the DB ...')
             cur = conn.cursor()
-            for record in listRecordInsert:
-                cur.execute(sqlQuery, record)
-                conn.commit()
-            print(str(len(listRecordInsert))+" record inserted successfully")
+
+            sqlQuery = sql.SQL(queryText).format(table=sql.Identifier(tableName))
+            extras.execute_values(cur, sqlQuery.as_string(cur), listRecordInsert+listRecordStandby)
+            conn.commit()
+
+            print("Inserting current data: "+str(cur.rowcount)+" records inserted successfully")
+            if len(listRecordStandby)!= 0:
+                print("Of the above information, "+ str(len(listRecordStandby)) +" corresponds to old data") 
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)
+            listRecordStandby += listRecordInsert
+            print("Saving information ("+str(len(listRecordInsert))+" records) for future use ("+str(len(listRecordStandby))+" total records in standby)")
         finally:
             if conn is not None:
                 conn.close()
     else:
-        print("Sin data")
-
+        print("Whitout data")
 
 def recordGenerator(recordStreams):
     global setCameraId
@@ -125,7 +133,6 @@ def getInfoCam(camId):
     except:
         return("-1", date, time, "---", "---", "---")
 
-
 def postgresql_to_dataframe(conn, select_query, column_names):
     cursor = conn.cursor()
     try:
@@ -152,8 +159,8 @@ def generateCSV():
                     "nombre_comercial_acceso", "piso", "ins", "outs", ]
     try:
         df = postgresql_to_dataframe(
-            conn, "select * from test_dk_crack where fecha='"+yesterday.strftime("%m/%d/%Y")+"'", column_names)
-        df.to_csv('dk_'+yesterday.strftime("%m_%d_%Y")+'.csv', index=False)
+            conn, "select * from dev_visitantes_totales where fecha='"+yesterday.strftime("%m/%d/%Y")+"'", column_names)
+        df.to_csv('Tlf_visitantestotales_'+yesterday.strftime("%Y_%m_%d")+'.csv', index=False)
         print("CSV generated")
 
     except (Exception) as error:
