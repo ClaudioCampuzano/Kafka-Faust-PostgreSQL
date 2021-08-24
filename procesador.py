@@ -10,19 +10,28 @@ from concurrent.futures import ThreadPoolExecutor
 from psycopg2 import extras
 from psycopg2 import sql
 
+import ftplib
+import io
+
 param_dic = {
-    "host": "-",
-    "database": "-",
-    "user": "-",
-    "password": "-"
+    "host": "192.168.0.127",
+    "database": "dk_omia",
+    "user": "postgres",
+    "password": "Video2021$"
 }
+tableName='dev_visitantes_totales'
+
+hostFTP='192.168.0.127'
+userFTP='ftpuser'
+passFTP='clave'
+folderFTP='files'
 
 app = faust.App(
     "ETL",
-    broker='kafka://-:-',
+    broker='kafka://127.0.0.1:9092',
     value_serializer='json',
 )
-test_topic = app.topic("-")
+test_topic = app.topic("analytics-omia")
 
 thread_pool = ThreadPoolExecutor(max_workers=None)
 
@@ -35,7 +44,7 @@ listRecordStandby = []
 setCameraId = set()
 
 guayaquil = pytz.timezone('America/Guayaquil')
-tableName='-'
+
 
 @app.agent(test_topic)
 async def streamUnbundler(events):
@@ -150,17 +159,28 @@ def postgresql_to_dataframe(conn, select_query, column_names):
     df = pd.DataFrame(tupples, columns=column_names)
     return df
 
-
+#https://stackoverflow.com/questions/46071686/how-to-write-pandas-dataframe-to-csv-xls-on-ftp-directly
 def generateCSV():
-    global param_dic
-    conn = connect(param_dic)
+    global param_dic,hostFTP,userFTP,passFTP,folderFTP,tableName
     yesterday = (datetime.now() - timedelta(1))
     column_names = ["id_cc", "fecha", "hora", "acceso_id",
                     "nombre_comercial_acceso", "piso", "ins", "outs", ]
     try:
+        conn = connect(param_dic)
+        if conn is None:
+            raise ValueError('Error when trying to connect to the DB ...')
         df = postgresql_to_dataframe(
-            conn, "select * from dev_visitantes_totales where fecha='"+yesterday.strftime("%m/%d/%Y")+"'", column_names)
-        df.to_csv('Tlf_visitantestotales_'+yesterday.strftime("%Y_%m_%d")+'.csv', index=False)
+            conn, "select * from "+tableName+" where fecha='"+yesterday.strftime("%m/%d/%Y")+"'", column_names)
+
+        FTP = ftplib.FTP(hostFTP,userFTP,passFTP)
+        FTP.cwd(folderFTP)
+
+        buffer = io.StringIO()
+        df.to_csv(buffer)
+        text = buffer.getvalue()
+        bio = io.BytesIO(str.encode(text))
+
+        FTP.storbinary('STOR Tlf_visitantestotales_'+yesterday.strftime("%Y_%m_%d")+'.csv', bio)
         print("CSV generated")
 
     except (Exception) as error:
@@ -168,5 +188,3 @@ def generateCSV():
     finally:
         if conn is not None:
             conn.close()
-
-
