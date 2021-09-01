@@ -12,3 +12,5 @@ procesador.py -> desagregacion de texto, carga a base de datos
 procesadorCsv.py -> desagregacion de texto, carga a base de datos y generacion de csv en ftp
 
 statecam.py -> estado de las camaras 
+
+procesadorAlertas.py -> desagregacion de texto, envio desagregacion a nuevo topico
