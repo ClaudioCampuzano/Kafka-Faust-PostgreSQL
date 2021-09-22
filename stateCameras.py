@@ -1,3 +1,6 @@
+# Procesamiento de mensajes de kafka provinientes de los appliances, para monitorear el estado de las camaras atravez de la existencia de mensajes, para su
+# deposito en postgreSQL
+
 import faust
 from concurrent.futures import ThreadPoolExecutor
 import psycopg2
