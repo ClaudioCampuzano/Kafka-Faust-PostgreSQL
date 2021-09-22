@@ -1,3 +1,4 @@
+# Procesamiento de los mensajes de kafka proviniente de los appliances, con informacion de flujo para su deposito en PostgreSQL
 import psycopg2
 import faust
 import json
