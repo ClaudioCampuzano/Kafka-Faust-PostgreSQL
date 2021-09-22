@@ -1,3 +1,6 @@
+# Procesamiento de los mensajes de kafka proviniente de los appliances, con informacion de flujo para su deposito en PostgreSQL, 
+# mas la generacion de CSV con informacion de la base de datos basado en un crontab, para su deposito en un FTP
+
 import psycopg2
 import faust
 import pandas as pd
