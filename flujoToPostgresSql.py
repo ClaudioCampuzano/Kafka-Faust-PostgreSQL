@@ -93,6 +93,7 @@ def insert_data():
             print("Inserting current data: "+str(cur.rowcount)+" records inserted successfully")
             if len(listRecordStandby)!= 0:
                 print("Of the above information, "+ str(len(listRecordStandby)) +" corresponds to old data") 
+                listRecordStandby = []
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)
             listRecordStandby += listRecordInsert
