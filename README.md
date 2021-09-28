@@ -7,10 +7,12 @@ source env/bin/activate
 pip3 install -U faust psycopg2-binary pandas
 faust -A procesador worker -l info
 ```
-procesador.py -> desagregacion de texto, carga a base de datos
+aforoToSqlServer.py -> Procesamiento de mensajes, y carga de datos de AFORO hacia SQL Server 
 
-procesadorCsv.py -> desagregacion de texto, carga a base de datos y generacion de csv en ftp
+flujoToPostgresSql.py -> Procesamiento de mensajes, y carga de datos de FLUJO hacia postgreSQL
 
-statecam.py -> estado de las camaras 
+flujoToPostgresSql_and_CSVtoFTP.py -> Procesamiento de mensajes, y carga de datos de FLUJO hacia postgreSQL, ademas de generacion de CSV para su carga en FTP
 
-procesadorAlertas.py -> desagregacion de texto, envio desagregacion a nuevo topico
+stateCameras.py -> Analisis de mensajes, para verificar estado de camaras
+
+permanenciaToPostgreSql-> Procesamiento de mensajes, y carga de datos de PERMANENCIA (tiempo en pantalla) hacia postgreSQL
