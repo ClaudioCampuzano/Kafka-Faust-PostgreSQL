@@ -11,9 +11,9 @@ thread_pool = ThreadPoolExecutor(max_workers=None)
 
 param_postgreSQL = {
     "host": "-",
-    "database": "postgres",
+    "database": "-",
     "user": "-",
-    "password": "-"
+    "password": "-*"
 }
 tableName = 'dev_visitantes_totales'
 
@@ -74,7 +74,7 @@ def insert_data():
     print(listRecordInsert)
 
 
-     if listRecordInsert:
+    if listRecordInsert:
         queryText = "INSERT INTO {table}(id_cc, fecha, hora, Zona, Zona_id, tpromedio) VALUES %s;"
         try:
             conn = connect(param_postgreSQL)
@@ -101,7 +101,7 @@ def insert_data():
                   str(len(listRecordStandby))+" total records in standby)")
         finally:
             if conn is not None:
-                conn.close()
+                conn.close() 
 
 
 def recordGenerator(cTime):
@@ -112,8 +112,11 @@ def recordGenerator(cTime):
     for eventosId in tablaEventos:
         tInicial = datetime.datetime.strptime(
             tablaEventos[eventosId][0], '%Y-%m-%d %H:%M:%S')
-        tFinal = datetime.datetime.strptime(
-            tablaEventos[eventosId][1], '%Y-%m-%d %H:%M:%S')
+        try:
+            tFinal = datetime.datetime.strptime(
+                tablaEventos[eventosId][1], '%Y-%m-%d %H:%M:%S')
+        except:
+            tFinal = currentTime
         timeInScene = (tFinal-tInicial).total_seconds()
         camId = eventosId.split("-")[0]
         if camId in dicTimes:
