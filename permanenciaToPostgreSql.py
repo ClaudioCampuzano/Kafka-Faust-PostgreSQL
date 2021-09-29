@@ -1,83 +1,97 @@
-import faust
-import datetime
 import psycopg2
-from psycopg2 import extras
-from psycopg2 import sql
+import faust
 import json
+import pytz
+
+from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 
+from psycopg2 import extras
+from psycopg2 import sql
 
 thread_pool = ThreadPoolExecutor(max_workers=None)
 
-param_postgreSQL = {
-    "host": "-",
-    "database": "-",
-    "user": "-",
-    "password": "-*"
+param_dic = {
+    "host": "192.168.0.127",
+    "database": "dk_omia",
+    "user": "postgres",
+    "password": "Video2021$"
 }
-tableName = 'dev_visitantes_totales'
+tableNameFlujo = 'dev_visitantes_totales'
+tableNameAtributo = 'dev_visitantes_totales_atributo'
 
-timeToUpload = 25.0
+timeToUpload = 60.0
 
 app = faust.App(
-    "permanencia2",
-    broker="kafka://-:9092",
-    value_serializer="json",
+    "flujo",
+    broker='kafka://34.227.94.165:9092',
+    value_serializer='json',
 )
-main_topic = app.topic("analytics-jiro1")
+main_topic = app.topic("Ds-Jiro3")
 
-tablaEventos = {}
-currentTime = datetime.datetime.strptime(
-    '2020-01-01 00:00:00', '%Y-%m-%d %H:%M:%S')
-listRecordStandby = []
-
-ANALITICA = ["roi_person"]
-
-with open("camInfo_permanencia.json") as jsonFile:
+with open("camaras_info.json") as jsonFile:
     jsonCamInfo = json.load(jsonFile)
     jsonFile.close()
 
+listDisaggregatedRecords = []
+listRecordStandby = []
+setCameraId = set()
+currentTime = ''
+
+ANALITICA = ["roi_person", "lc_person"]
+
 
 @app.agent(main_topic)
-async def dataEntry(events):
-    global tablaEventos, currentTime
+async def streamUnbundler(events):
+    global listDisaggregatedRecords, setCameraId, jsonCamInfo, currentTime
+
     async for event in events:
-        currentTime = datetime.datetime.strptime(
-            event["@timestamp"], '%Y-%m-%d %H:%M:%S')
+        currentTime = event["@timestamp"]
         keysEvent = [*event]
-        if ANALITICA[0] in keysEvent:
-            subKeysEvent = [*event[ANALITICA[0]]]
-            if 'ids' in subKeysEvent:
-                # lista de ids limpia sin espacio vacio o nulos
-                list_ID = set(
-                    str(event["camera_id"])+"-"+x for x in event[ANALITICA[0]]["ids"].split('|') if x)
-                for id in list_ID:
-                    if id in tablaEventos:
-                        tablaEventos[id].append(event["@timestamp"])
-                        if len(tablaEventos[id]) > 2:
-                            tablaEventos[id].pop(1)
-                    else:
-                        tablaEventos[id] = list()
-                        tablaEventos[id].append(event["@timestamp"])
+        if ANALITICA[1] in keysEvent:
+            dictCamera = {}
+            listCounts = [x for x in event[ANALITICA[1]]['count'].split('|') if x]
+            dictCamera['counter'] = listCounts
+            dictCamera['camera_id'] = event["camera_id"]
+            
+            subKeysEvent = [*event[ANALITICA[1]]]
+            if "males" in subKeysEvent and "females" in subKeysEvent:
+                males = [x for x in event[ANALITICA[1]]["males"].split('|') if x]
+                females = [x for x in event[ANALITICA[1]]["females"].split('|') if x]
+                dictCamera['gender'] = {'males': males, 'females': females}
+            
+            for key in ['males_details', 'females_details']:
+                if key in subKeysEvent:
+                    age_1_10 = [x for x in event[ANALITICA[1]][key]["age_1_10"].split('|') if x]
+                    age_11_18 = [x for x in event[ANALITICA[1]][key]["age_11_18"].split('|') if x]
+                    age_19_35 = [x for x in event[ANALITICA[1]][key]["age_19_35"].split('|') if x]
+                    age_36_50 = [x for x in event[ANALITICA[1]][key]["age_36_50"].split('|') if x]
+                    age_51_64 = [x for x in event[ANALITICA[1]][key]["age_51_64"].split('|') if x]
+                    age_GTE_65 = [x for x in event[ANALITICA[1]][key]["age_GTE_65"].split('|') if x]
+                    dictCamera[key] = {'age_1_10': age_1_10, 'age_11_18': age_11_18, 'age_19_35': age_19_35,
+                                       'age_36_50': age_36_50, 'age_51_64': age_51_64, 'age_GTE_65': age_GTE_65}
+            listDisaggregatedRecords.append(dictCamera)
+            setCameraId.add(event["camera_id"])
 
 
 @app.timer(timeToUpload)
-async def loadToBD():
+async def loadTopostgreSQL():
     global thread_pool
     app.loop.run_in_executor(thread_pool, insert_data)
 
 
 def insert_data():
-    global tableName, param_postgreSQL, listRecordStandby, currentTime
 
-    listRecordInsert = recordGenerator(currentTime)
+    global param_dic, listRecordStandby, tableNameFlujo, tableNameAtributo
+    listRecordInsert = recordGenerator()
     print(listRecordInsert)
 
+      if listRecordInsert[0] or listRecordStandby[0]:
+        queryTextFlujo = "INSERT INTO {tableNameFlujo}(id_cc, fecha, hora, acceso_id, nombre_comercial_acceso, piso, ins, outs, registro_id) VALUES %s;"
+        queryTextAtributo = "INSERT INTO {tableNameAtributo}(registro_id, tipo_acceso, cnt_hombre_1_10, cnt_hombre_11_18,cnt_hombre_19_35,cnt_hombre_36_50,cnt_hombre_51_64,cnt_hombre_gt_65, cnt_mujer_1_10, cnt_mujer_11_18, cnt_mujer_19_35, cnt_mujer_36_50, cnt_mujer_51_64, cnt_mujer_gt_65) VALUES %s;"
 
-    if listRecordInsert:
-        queryText = "INSERT INTO {table}(id_cc, fecha, hora, Zona, Zona_id, tpromedio) VALUES %s;"
         try:
-            conn = connect(param_postgreSQL)
+            conn = connect(param_dic)
             if conn is None:
                 raise ValueError('Error when trying to connect to the DB ...')
             cur = conn.cursor()
@@ -101,42 +115,58 @@ def insert_data():
                   str(len(listRecordStandby))+" total records in standby)")
         finally:
             if conn is not None:
-                conn.close() 
+                conn.close()
+    else:
+        print("Whitout data")  
 
 
-def recordGenerator(cTime):
-    global tablaEventos
-    listRecord = []
-    dicTimes = {}
+def recordGenerator():
+    global setCameraId, listDisaggregatedRecords, currentTime
+    listRecordFlujo = []
+    listRecordAtributosIn = []
+    listRecordAtributosOut = []
+    if listDisaggregatedRecords:
+        for camId in setCameraId:
+            listFiltered = [e for e in listDisaggregatedRecords if camId == e['camera_id']]
+            if listFiltered:
+                ins, outs = 0, 0
+                # 0-> Ins 1->Out
+                cnt_males, cnt_females = list(), list()
+                for i in range(0,2):
+                    # 1_10, 11_18, 19_35, 36_50, 51_64, GT_65;
+                    cnt_males.append([0] *6)
+                    cnt_females.append([0] *6)
+                    
+                for record in listFiltered:
+                    ins += int(record['counter'][0])
+                    outs += int(record['counter'][1])
+                    
+                    for detailsGenderKey in ['males_details', 'females_details']:
+                        if detailsGenderKey in record:
+                            for typeAcess in range(0,2):
+                                index = 0
+                                for AgeKey in record[detailsGenderKey]:
+                                    if detailsGenderKey == 'males_details':
+                                        cnt_males[typeAcess][index] += int(record[detailsGenderKey][AgeKey][typeAcess])
+                                    else:
+                                        cnt_females[typeAcess][index] += int(record[detailsGenderKey][AgeKey][typeAcess])
+                                    index += 1
+            record_id = str(jsonCamInfo[str(camId)]['id_cc']) + "_" + str(camId) + "_" + "_".join(currentTime.split(" "))
+            listRecordFlujo.append(getInfoCam(camId)+(ins, outs, record_id))
+            listRecordAtributosIn.append((record_id, 'ins') + tuple(cnt_males[0]) + tuple(cnt_females[0]))
+            listRecordAtributosOut.append((record_id, 'outs') + tuple(cnt_males[1]) + tuple(cnt_females[1]))
+    listDisaggregatedRecords.clear()
+    setCameraId.clear()
+    return [listRecordFlujo,listRecordAtributosIn, listRecordAtributosOut]
 
-    for eventosId in tablaEventos:
-        tInicial = datetime.datetime.strptime(
-            tablaEventos[eventosId][0], '%Y-%m-%d %H:%M:%S')
-        try:
-            tFinal = datetime.datetime.strptime(
-                tablaEventos[eventosId][1], '%Y-%m-%d %H:%M:%S')
-        except:
-            tFinal = currentTime
-        timeInScene = (tFinal-tInicial).total_seconds()
-        camId = eventosId.split("-")[0]
-        if camId in dicTimes:
-            dicTimes[camId] += timeInScene
-        else:
-            dicTimes[camId] = timeInScene
-        tablaEventos[eventosId].clear()
 
-    for camId in dicTimes:
-        listRecord.append(getInfoCam(camId, cTime) +
-                          (str(dicTimes[camId]).split(".")[0],))
-    return listRecord
-
-
-def getInfoCam(camId, cTime):
+def getInfoCam(camId):
     global jsonCamInfo
-    date = cTime.strftime("%m/%d/%Y")
-    time = cTime.strftime("%H:%M:%S")
+    now = datetime.now()
+    date = now.strftime("%m/%d/%Y")
+    time = now.strftime("%H:%M:%S")
     try:
-        return(jsonCamInfo[str(camId)]['id_cc'], date, time, jsonCamInfo[str(camId)]['zona'], jsonCamInfo[str(camId)]['zona_id'])
+        return(jsonCamInfo[str(camId)]['id_cc'], date, time, jsonCamInfo[str(camId)]['acceso_id'], jsonCamInfo[str(camId)]['nombre_comercial_acceso'], jsonCamInfo[str(camId)]['piso'])
     except:
         return("-1", date, time, "---", "---", "---")
 
@@ -144,7 +174,9 @@ def getInfoCam(camId, cTime):
 def connect(params_dic):
     conn = None
     try:
+        # connect to the PostgreSQL server
         conn = psycopg2.connect(**params_dic)
     except (Exception, psycopg2.DatabaseError) as error:
         print(end=" ")
+    #print("Connection successful PostgreSQL")
     return conn
