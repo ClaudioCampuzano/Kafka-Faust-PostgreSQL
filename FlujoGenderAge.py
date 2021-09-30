@@ -1,3 +1,4 @@
+# Informacion hacia PostgreSQL
 import psycopg2
 import faust
 import json
