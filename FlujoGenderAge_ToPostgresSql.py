@@ -24,12 +24,12 @@ timeToUpload = 60.0
 
 app = faust.App(
     "flujo",
-    broker='kafka://34.227.94.165:9092',
+    broker='kafka://-:9092',
     value_serializer='json',
 )
 main_topic = app.topic("Ds-Jiro3")
 
-with open("camaras_info.json") as jsonFile:
+with open("camarasInfo_Flujo.json") as jsonFile:
     jsonCamInfo = json.load(jsonFile)
     jsonFile.close()
 
