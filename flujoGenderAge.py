@@ -30,7 +30,7 @@ app = faust.App(
 )
 main_topic = app.topic("Ds-Jiro3")
 
-with open("camarasInfo_Flujo.json") as jsonFile:
+with open("camarasInfo_flujo.json") as jsonFile:
     jsonCamInfo = json.load(jsonFile)
     jsonFile.close()
 
