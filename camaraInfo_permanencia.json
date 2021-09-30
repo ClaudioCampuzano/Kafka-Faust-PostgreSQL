@@ -1,0 +1,32 @@
+{
+    "0": {
+        "id_cc": 1,
+        "zonazona_id": "QN_CP_21",
+        "zona": "INGRESO EL COMERCIO"
+    },
+    "1": {
+        "id_cc": 1,
+        "zonazona_id": "QN_CP_23",
+        "zona": "INGRESO DE PRATI EX B"
+    },
+    "2": {
+        "id_cc": 1,
+        "zona_id": "QN_CP_24",
+        "zona": "INGRESO DE PRATI EX A"
+    },
+    "3": {
+        "id_cc": 1,
+        "zona_id": "QN_CP_29",
+        "zona": "INGRESO FYBECA"
+    },
+    "4": {
+        "id_cc": 1,
+        "zona_id": "QN_CP_18",
+        "zona": "INGRESO MARATHON A"
+    },
+    "5": {
+        "id_cc": 1,
+        "zona_id": "QN_CP_14",
+        "zona": "INGRESO SUB SUELO 3"
+    }
+}
