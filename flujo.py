@@ -27,7 +27,7 @@ test_topic = app.topic("analytics-omia")
 
 thread_pool = ThreadPoolExecutor(max_workers=None)
 
-with open("camaras_info.json") as jsonFile:
+with open("camarasInfo_flujo.json") as jsonFile:
     jsonCamInfo = json.load(jsonFile)
     jsonFile.close()
 
