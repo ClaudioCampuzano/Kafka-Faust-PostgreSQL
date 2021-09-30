@@ -113,8 +113,11 @@ def recordGenerator(cTime):
     for eventosId in tablaEventos:
         tInicial = datetime.datetime.strptime(
             tablaEventos[eventosId][0], '%Y-%m-%d %H:%M:%S')
-        tFinal = datetime.datetime.strptime(
-            tablaEventos[eventosId][1], '%Y-%m-%d %H:%M:%S')
+        try:
+            tFinal = datetime.datetime.strptime(
+                tablaEventos[eventosId][1], '%Y-%m-%d %H:%M:%S')
+        except:
+            tFinal = currentTime
         timeInScene = (tFinal-tInicial).total_seconds()
         camId = eventosId.split("-")[0]
         if camId in dicTimes:
