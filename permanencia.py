@@ -1,3 +1,4 @@
+# Informacion hacia PostgreSQL
 import faust
 import datetime
 import psycopg2
