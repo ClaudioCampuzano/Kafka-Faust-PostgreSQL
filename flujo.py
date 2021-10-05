@@ -15,7 +15,7 @@ param_dic = {
     "user": "postgres",
     "password": "Video2021$"
 }
-tableName='visitantes_totales'
+tableName='ingreso_persona'
 
 app = faust.App(
     "ETL-flujo",
@@ -23,7 +23,7 @@ app = faust.App(
     value_serializer='json',
 )
 main_topic = app.topic("analytics-omia")
-timeToUpload = 60.0
+timeToUpload = 300.0
 
 with open("camarasInfo_flujo.json") as jsonFile:
     jsonCamInfo = json.load(jsonFile)
