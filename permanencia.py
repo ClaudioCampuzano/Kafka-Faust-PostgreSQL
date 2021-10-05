@@ -34,7 +34,7 @@ listRecordStandby = []
 
 ANALITICA = ["roi_person"]
 
-with open("camInfo_permanencia.json") as jsonFile:
+with open("camaras_info_deploy.json") as jsonFile:
     jsonCamInfo = json.load(jsonFile)
     jsonFile.close()
 
