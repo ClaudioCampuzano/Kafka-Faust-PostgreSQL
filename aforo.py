@@ -6,6 +6,8 @@ import numpy as np
 import psycopg2
 from psycopg2 import extras
 from psycopg2 import sql
+import json
+
 
 thread_pool = ThreadPoolExecutor(max_workers=None)
 
@@ -22,8 +24,8 @@ app = faust.App(
     broker="kafka://34.227.94.165:9092",
     value_serializer="json",
 )
-main_topic = app.topic("analytics-omia")
-timeToUpload = 300.0
+main_topic = app.topic("Ds-Jiro3")
+timeToUpload = 30.0
 
 with open("camarasInfo_aforo.json") as jsonFile:
     jsonCamInfo = json.load(jsonFile)
@@ -44,8 +46,7 @@ async def streamRoiUnbundler(events):
             for index, count in enumerate(listCounts):
                 dictCamera = {}
                 dictCamera['count'] = int(count)
-                dictCamera['camera_id'] = int(event['roi_person']['camera_id'])
-                dictCamera['zona_id'] = jsonCamInfo[dictCamera['camera_id']]['zona'][str(index)]
+                dictCamera['zona_id'] = jsonCamInfo[str(event['roi_person']['camera_id'])]['zona'][str(index)]
                 setZonesId.add(dictCamera['zona_id'])
                 listDisaggregatedRecords.append(dictCamera)
 
@@ -58,8 +59,10 @@ async def loadTopostgreSQL():
 def insertData():
     global setCameraId, listDisaggregatedRecords, tableName
     listRecordInsert = recordGenerator()
+    
+    print(listRecordInsert)
 
-    if listRecordInsert:
+    """ if listRecordInsert:
         queryText = "INSERT INTO {table}(id_cc, fecha, hora, zona_id, zona, visitas) VALUES %s;"
         try:
             conn = connect(param_dic)
@@ -81,7 +84,7 @@ def insertData():
             if conn is not None:
                 conn.close()
     else:
-        print("Whitout data")
+        print("Whitout data") """
 
 
 def recordGenerator():
@@ -92,21 +95,21 @@ def recordGenerator():
         for zoneId in setZonesId:
             listFiltered = [e for e in listDisaggregatedRecords if zoneId == e['zona_id']]
             if listFiltered:
-                list_count = [int(e["count"]) for e in list_filtered]
+                list_count = [int(e["count"]) for e in listFiltered]
                 sum_count = sum(list_count)
-                listRecordAforo.append(getInfoCam(camId,zoneId)+(sum_count))
+                listRecordAforo.append(getInfoCam(zoneId)+(sum_count,))
 
     listDisaggregatedRecords.clear()
     setZonesId.clear()
-    return list_record
+    return listRecordAforo
 
-def getInfoCam(camId,zoneId):
+def getInfoCam(zoneId):
     global jsonCamInfo
     now = datetime.now()
     date = now.strftime("%m/%d/%Y")
     time = now.strftime("%H:%M:%S")
     try:
-        return(jsonCamInfo[str(camId)]['id_cc'], date, time, zoneId, jsonCamInfo['zona'][zoneId])
+        return(jsonCamInfo['id_cc'], date, time, zoneId, jsonCamInfo['zona'][zoneId])
     except:
         return("-1", date, time, "---", "---", "---")
 
