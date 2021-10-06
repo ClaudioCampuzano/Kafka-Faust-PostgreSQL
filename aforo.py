@@ -62,7 +62,7 @@ def insertData():
     
     print(listRecordInsert)
 
-    """ if listRecordInsert:
+    if listRecordInsert:
         queryText = "INSERT INTO {table}(id_cc, fecha, hora, zona_id, zona, visitas) VALUES %s;"
         try:
             conn = connect(param_dic)
@@ -84,7 +84,7 @@ def insertData():
             if conn is not None:
                 conn.close()
     else:
-        print("Whitout data") """
+        print("Whitout data") 
 
 
 def recordGenerator():
