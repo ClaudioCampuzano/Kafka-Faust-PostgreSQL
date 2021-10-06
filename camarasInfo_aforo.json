@@ -1,42 +1,37 @@
 {
   "0": {
-    "id_cc": 1,
     "zona": {
-      "0": "QN_CP_21",
-      "1": "QN_CP_23"
+      "0": "QN_CP_23",
+      "1": "QN_CP_21"
     }
   },
   "1": {
-    "id_cc": 1,
     "zona": {
       "0": "QN_CP_23"
     }
   },
   "2": {
-    "id_cc": 1,
     "zona": {
       "0": "QN_CP_24"
     }
   },
   "3": {
-    "id_cc": 1,
     "zona": {
       "0": "QN_CP_29"
     }
   },
   "4": {
-    "id_cc": 1,
     "zona": {
       "0": "QN_CP_18"
     }
   },
   "5": {
-    "id_cc": 1,
     "zona": {
       "0": "QN_CP_14",
       "1": "QN_CP_18"
     }
   },
+  "id_cc": 1,
   "zona": {
     "QN_CP_21": "INGRESO EL COMERCIO",
     "QN_CP_23": "INGRESO DE PRATI EX B",
@@ -46,3 +41,4 @@
     "QN_CP_14": "INGRESO SUB SUELO 3"
   }
 }
+
