@@ -1,4 +1,5 @@
 # Procesamiento de los mensajes de kafka proviniente de los appliances, con informacion de flujo para su deposito en PostgreSQL
+# Se generalizo de tal manera que, del string que se recibe en la variable 'count (1|3|3)', los index pares son entradas, y los impares son salidas
 import psycopg2
 import faust
 import json
