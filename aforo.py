@@ -1,4 +1,5 @@
-#### Procesamiento de los mensajes de kafka provinientes de los appliances, con informacion de aforo para su deposito en ostgresql
+#### Procesamiento de los mensajes de kafka provinientes de los appliances, con informacion de aforo para su deposito en postgresql
+# es importante destacar que esto agrupa por zonasId
 import faust
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
