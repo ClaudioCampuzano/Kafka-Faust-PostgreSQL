@@ -25,8 +25,8 @@ app = faust.App(
     broker="kafka://34.227.94.165:9092",
     value_serializer="json",
 )
-main_topic = app.topic("Ds-Jiro3")
-timeToUpload = 30.0
+main_topic = app.topic("roi")
+timeToUpload = 600.0
 
 with open("camarasInfo_aforo.json") as jsonFile:
     jsonCamInfo = json.load(jsonFile)
@@ -43,13 +43,15 @@ async def streamRoiUnbundler(events):
     async for event in events:
         keysEvent = [*event]
         if "roi_person" in keysEvent:
+            print(event)
             listCounts = [x for x in event['roi_person']['count'].split('|') if x]
             for index, count in enumerate(listCounts):
-                dictCamera = {}
-                dictCamera['count'] = int(count)
-                dictCamera['zona_id'] = jsonCamInfo[str(event['roi_person']['camera_id'])]['zona'][str(index)]
-                setZonesId.add(dictCamera['zona_id'])
-                listDisaggregatedRecords.append(dictCamera)
+                if index != 0:
+                    dictCamera = {}
+                    dictCamera['count'] = int(count)
+                    dictCamera['zona_id'] = jsonCamInfo[str(event['camera_id'])]['zona'][str(index-1)]
+                    setZonesId.add(dictCamera['zona_id'])
+                    listDisaggregatedRecords.append(dictCamera)
 
 @app.timer(timeToUpload)
 async def loadTopostgreSQL():
@@ -58,12 +60,12 @@ async def loadTopostgreSQL():
 
 
 def insertData():
-    global setCameraId, listDisaggregatedRecords, tableName
+    global tableName, listRecordStandby
     listRecordInsert = recordGenerator()
     
     print(listRecordInsert)
 
-    if listRecordInsert:
+    """ if listRecordInsert:
         queryText = "INSERT INTO {table}(id_cc, fecha, hora, zona_id, zona, visitas) VALUES %s;"
         try:
             conn = connect(param_dic)
@@ -85,7 +87,7 @@ def insertData():
             if conn is not None:
                 conn.close()
     else:
-        print("Whitout data") 
+        print("Whitout data") """
 
 
 def recordGenerator():
