@@ -1,5 +1,4 @@
-#### Procesamiento de los mensajes de kafka provinientes de los appliances, con informacion de aforo para su deposito en postgresql
-# es importante destacar que esto agrupa por zonasId
+#### Procesamiento de los mensajes de kafka provinientes de los appliances, con informacion de aforo para su deposito en ostgresql
 import faust
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
@@ -8,6 +7,7 @@ import psycopg2
 from psycopg2 import extras
 from psycopg2 import sql
 import json
+import numpy
 
 
 thread_pool = ThreadPoolExecutor(max_workers=None)
@@ -26,13 +26,14 @@ app = faust.App(
     value_serializer="json",
 )
 main_topic = app.topic("roi")
-timeToUpload = 600.0
+timeToUpload = 30.0
 
 with open("camarasInfo_aforo.json") as jsonFile:
     jsonCamInfo = json.load(jsonFile)
     jsonFile.close()
 
 setZonesId = set()
+setCamerasId = set()
 listDisaggregatedRecords = []
 listRecordStandby = []
 
@@ -50,7 +51,9 @@ async def streamRoiUnbundler(events):
                     dictCamera = {}
                     dictCamera['count'] = int(count)
                     dictCamera['zona_id'] = jsonCamInfo[str(event['camera_id'])]['zona'][str(index-1)]
+                    dictCamera['camera_id'] = event['camera_id']
                     setZonesId.add(dictCamera['zona_id'])
+                    setCamerasId.add(dictCamera['camera_id'])
                     listDisaggregatedRecords.append(dictCamera)
 
 @app.timer(timeToUpload)
@@ -91,19 +94,27 @@ def insertData():
 
 
 def recordGenerator():
-    global setZonesId, listDisaggregatedRecords
+    global setZonesId, setCamerasId, listDisaggregatedRecords
+    recordAforo = {}
     listRecordAforo = []
     
     if listDisaggregatedRecords:
-        for zoneId in setZonesId:
-            listFiltered = [e for e in listDisaggregatedRecords if zoneId == e['zona_id']]
-            if listFiltered:
-                list_count = [int(e["count"]) for e in listFiltered]
-                sum_count = sum(list_count)
-                listRecordAforo.append(getInfoCam(zoneId)+(sum_count,))
+        for cameraId in setCamerasId:
+            listFiltered_camId = [e for e in listDisaggregatedRecords if cameraId == e['camera_id']]
+            if listFiltered_camId:
+                for zoneId in setZonesId:
+                    listcount_zoneId = [int(e["count"]) for e in listFiltered_camId if zoneId == e['zona_id']]
+                    prom_count = numpy.mean(listcount_zoneId)
+                    if zoneId in recordAforo.keys():
+                        recordAforo[zoneId] += prom_count
+                    else:
+                        recordAforo[zoneId] = prom_count 
+        for zoneRec in recordAforo.keys():
+            listRecordAforo.append(getInfoCam(zoneRec)+(recordAforo[zoneRec],))
 
     listDisaggregatedRecords.clear()
     setZonesId.clear()
+    setCamerasId.clear()
     return listRecordAforo
 
 def getInfoCam(zoneId):
