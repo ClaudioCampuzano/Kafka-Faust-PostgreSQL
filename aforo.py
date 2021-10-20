@@ -47,14 +47,18 @@ async def streamRoiUnbundler(events):
             print(event)
             listCounts = [x for x in event['roi_person']['count'].split('|') if x]
             for index, count in enumerate(listCounts):
-                if index != 0:
-                    dictCamera = {}
-                    dictCamera['count'] = int(count)
+                dictCamera = {}
+                dictCamera['count'] = int(count)
+                dictCamera['camera_id'] = event['camera_id']
+                setZonesId.add(dictCamera['zona_id'])
+                setCamerasId.add(dictCamera['camera_id'])
+                
+                if ((len(listCounts) > 1) and (index != 0)): 
                     dictCamera['zona_id'] = jsonCamInfo[str(event['camera_id'])]['zona'][str(index-1)]
-                    dictCamera['camera_id'] = event['camera_id']
-                    setZonesId.add(dictCamera['zona_id'])
-                    setCamerasId.add(dictCamera['camera_id'])
-                    listDisaggregatedRecords.append(dictCamera)
+                else:
+                    dictCamera['zona_id'] = jsonCamInfo[str(event['camera_id'])]['zona'][str(index)]
+               
+                listDisaggregatedRecords.append(dictCamera)
 
 @app.timer(timeToUpload)
 async def loadTopostgreSQL():
