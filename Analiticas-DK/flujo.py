@@ -18,13 +18,14 @@ param_dic = {
 }
 tableName='ingreso_persona'
 
+timeToUpload = 300.0
+
 app = faust.App(
     "ETL-flujo",
     broker='kafka://127.0.0.1:9092',
     value_serializer='json',
 )
 main_topic = app.topic("analytics-omia")
-timeToUpload = 300.0
 
 with open("camarasInfo_flujo.json") as jsonFile:
     jsonCamInfo = json.load(jsonFile)
@@ -36,7 +37,7 @@ setCameraId = set()
 
 @app.agent(main_topic)
 async def streamUnbundler(events):
-    global listDisaggregatedRecords, setCameraId, jsonCamInfo
+    global listDisaggregatedRecords, setCameraId
 
     async for event in events:
         keysEvent = [*event]
@@ -44,12 +45,11 @@ async def streamUnbundler(events):
             dictCamera = {}
             dictCamera['in'], dictCamera['out'], index  = 0, 0, 0
             listCounts = [x for x in event['lc_person']['count'].split('|') if x]
-            for count in listCounts:
+            for index, count in enumerate(listCounts):
                 if index % 2 == 0:
                     dictCamera['in'] += int(count)
                 else:
                     dictCamera['out'] += int(count)
-                index += 1
 
             dictCamera['camera_id'] = event['camera_id']
             setCameraId.add(dictCamera['camera_id'])
@@ -64,7 +64,7 @@ def insert_data():
     global param_dic, listRecordStandby, tableName
     listRecordInsert = recordGenerator()
 
-    if listRecordInsert:
+    if listRecordInsert or listRecordStandby:
         queryText = "INSERT INTO {table}(id_cc, fecha, hora, acceso_id, nombre_comercial_acceso, piso, ins, outs) VALUES %s;"
         try:
             conn = connect(param_dic)
@@ -113,7 +113,7 @@ def getInfoCam(camId):
     date = now.strftime("%m/%d/%Y")
     time = now.strftime("%H:%M:%S")
     try:
-        return(jsonCamInfo[str(camId)]['id_cc'], date, time, jsonCamInfo[str(camId)]['acceso_id'], jsonCamInfo[str(camId)]['nombre_comercial_acceso'], jsonCamInfo[str(camId)]['piso'])
+        return(jsonCamInfo['id_cc'], date, time, jsonCamInfo[str(camId)]['acceso_id'], jsonCamInfo[str(camId)]['nombre_comercial_acceso'], jsonCamInfo[str(camId)]['piso'])
     except:
         return("-1", date, time, "---", "---", "---")
 
