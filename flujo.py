@@ -51,7 +51,7 @@ async def streamUnbundler(events):
                     dictCamera['out'] += int(count)
                 index += 1
 
-            dictCamera['camera_id'] = event['lc_person']['camera_id']
+            dictCamera['camera_id'] = event['camera_id']
             setCameraId.add(dictCamera['camera_id'])
             listDisaggregatedRecords.append(dictCamera)
 
