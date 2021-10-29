@@ -50,14 +50,15 @@ async def streamRoiUnbundler(events):
                 dictCamera = {}
                 dictCamera['count'] = int(count)
                 dictCamera['camera_id'] = event['camera_id']
-                setZonesId.add(dictCamera['zona_id'])
-                setCamerasId.add(dictCamera['camera_id'])
+
                 
                 if ((len(listCounts) > 1) and (index != 0)): 
                     dictCamera['zona_id'] = jsonCamInfo[str(event['camera_id'])]['zona'][str(index-1)]
                 else:
                     dictCamera['zona_id'] = jsonCamInfo[str(event['camera_id'])]['zona'][str(index)]
-               
+                
+                setZonesId.add(dictCamera['zona_id'])
+                setCamerasId.add(dictCamera['camera_id'])
                 listDisaggregatedRecords.append(dictCamera)
 
 @app.timer(timeToUpload)
