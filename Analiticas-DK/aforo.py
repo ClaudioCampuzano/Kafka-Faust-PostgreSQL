@@ -109,10 +109,12 @@ def recordGenerator():
                 for zoneId in setZonesId:
                     listcount_zoneId = [int(e["count"]) for e in listFiltered_camId if zoneId == e['zona_id']]
                     prom_count = numpy.mean(listcount_zoneId)
+                    if numpy.isnan(prom_count):
+                        prom_count = 0
                     if zoneId in recordAforo.keys():
-                        recordAforo[zoneId] += prom_count
+                        recordAforo[zoneId] += round(prom_count)
                     else:
-                        recordAforo[zoneId] = prom_count 
+                        recordAforo[zoneId] = round(prom_count) 
         for zoneRec in recordAforo.keys():
             listRecordAforo.append(getInfoCam(zoneRec)+(recordAforo[zoneRec],))
 
