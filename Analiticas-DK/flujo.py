@@ -91,8 +91,6 @@ def insert_data():
 def recordGenerator():
     global setCameraId, listDisaggregatedRecords
     listRecordFlujo = []
-    listRecordAtributosIn = []
-    listRecordAtributosOut = []
     if listDisaggregatedRecords:
         for camId in setCameraId:
             listFiltered = [e for e in listDisaggregatedRecords if camId == e['camera_id']]
