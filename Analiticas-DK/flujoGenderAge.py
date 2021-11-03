@@ -78,11 +78,12 @@ def insert_data():
     global param_dic, listRecordStandby, tableNameFlujo, tableNameAtributo
     listRecordInsert = recordGenerator()
     
-    print(listRecordInsert)
-
-"""     if listRecordInsert[0] or listRecordInsert[1] or listRecordStandby[0] or listRecordStandby[1]:
+    if listRecordInsert[0] or listRecordInsert[1] or listRecordStandby[0] or listRecordStandby[1]:
         queryTextFlujo = "INSERT INTO {table}(id_cc, fecha, hora, acceso_id, nombre_comercial_acceso, piso, ins, outs, registro_id) VALUES %s;"
-        queryTextAtributo = "INSERT INTO {table}(registro_id, tipo_acceso, cnt_hombre_1_10, cnt_hombre_11_18,cnt_hombre_19_35,cnt_hombre_36_50,cnt_hombre_51_64,cnt_hombre_gt_65, cnt_mujer_1_10, cnt_mujer_11_18, cnt_mujer_19_35, cnt_mujer_36_50, cnt_mujer_51_64, cnt_mujer_gt_65) VALUES %s;"
+        if OnlyGender:
+            queryTextAtributo = "INSERT INTO {table}(registro_id, tipo_acceso, cnt_hombre_1_10, cnt_hombre_11_18,cnt_hombre_19_35,cnt_hombre_36_50,cnt_hombre_51_64,cnt_hombre_gt_65, cnt_mujer_1_10, cnt_mujer_11_18, cnt_mujer_19_35, cnt_mujer_36_50, cnt_mujer_51_64, cnt_mujer_gt_65) VALUES %s;"
+        else:
+            queryTextAtributo = "INSERT INTO {table}(registro_id, tipo_acceso, cnt_hombre, cnt_mujer) VALUES %s;"
 
         try:
             conn = connect(param_dic)
@@ -113,7 +114,7 @@ def insert_data():
             if conn is not None:
                 conn.close()
     else:
-        print("Whitout data")   """
+        print("Whitout data")   
 
 
 def recordGenerator():
@@ -131,7 +132,6 @@ def recordGenerator():
                 ## ['age_1_10','age_11_18','age_19_35','age_36_50','age_51_64'][,'age_GTE_65'[in,out]
                 cnt_malesIn, cnt_femalesIn = ([0]*6 for i in range(2))
                 cnt_malesOut, cnt_femalesOut = ([0]*6 for i in range(2))
-
 
                 for record in listFiltered:
                     for index, count in enumerate(record['counter']):
