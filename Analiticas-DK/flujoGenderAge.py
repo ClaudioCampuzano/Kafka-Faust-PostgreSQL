@@ -142,7 +142,7 @@ def recordGenerator():
                             
                     if OnlyGender:
                         for keyGender in ['males','females']:
-                            for index, count in enumerate(record['counter']):
+                            for index, count in enumerate(record[keyGender]):
                                 if index % 2 == 0:
                                     if keyGender == 'males':
                                         malesIn += int(count)
