@@ -44,7 +44,6 @@ async def streamRoiUnbundler(events):
     async for event in events:
         keysEvent = [*event]
         if "roi_person" in keysEvent:
-            print(event)
             listCounts = [x for x in event['roi_person']['count'].split('|') if x]
             for index, count in enumerate(listCounts):
                 dictCamera = {}
@@ -71,8 +70,6 @@ def insertData():
     global tableName, listRecordStandby
     listRecordInsert = recordGenerator()
     
-    print(listRecordInsert)
-
     """ if listRecordInsert:
         queryText = "INSERT INTO {table}(id_cc, fecha, hora, zona_id, zona, visitas) VALUES %s;"
         try:
