@@ -1,0 +1,18 @@
+{
+    "0": {
+        "acceso_id": "QN_CP_21",
+        "nombre_comercial_acceso": "INGRESO EL COMERCIO",
+        "piso": "Planta Baja"
+    },
+    "1": {
+        "acceso_id": "QN_CP_23",
+        "nombre_comercial_acceso": "INGRESO DE PRATI EX B",
+        "piso": "Planta Baja"
+    },
+    "2": {
+        "acceso_id": "QN_CP_24",
+        "nombre_comercial_acceso": "INGRESO DE PRATI EX A",
+        "piso": "Planta Baja"
+    },
+    "id_cc": 1
+}
