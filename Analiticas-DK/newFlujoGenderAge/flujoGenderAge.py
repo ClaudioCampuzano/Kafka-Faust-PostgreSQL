@@ -31,7 +31,7 @@ with open("camarasInfo_flujo.json") as jsonFile:
     jsonCamInfo = json.load(jsonFile)
     jsonFile.close()
     
-OnlyGender = True
+OnlyGender = False
 
 listDisaggregatedRecords = []
 listRecordStandby = []
@@ -78,7 +78,7 @@ def insert_data():
     global param_dic, listRecordStandby, tableNameFlujo, tableNameAtributo
     recordFlujo, recordAtributo = recordGenerator()
     
-    if recordFlujo or listRecordStandby or recordAtributo or listRecordStandby[1]:
+    if recordFlujo or recordAtributo or listRecordStandby[0] or listRecordStandby[1]:
         queryTextFlujo = "INSERT INTO {table}(id_cc, fecha, hora, acceso_id, nombre_comercial_acceso, piso, ins, outs) VALUES %s;"
         queryTextAtributo = "INSERT INTO {table}(id_cc, fecha, hora, acceso_id, nombre_comercial_acceso, piso, tipo_acceso, cnt_hombre_1_10, cnt_hombre_11_18,cnt_hombre_19_35,cnt_hombre_36_50,cnt_hombre_51_64,cnt_hombre_gt_65, cnt_mujer_1_10, cnt_mujer_11_18, cnt_mujer_19_35, cnt_mujer_36_50, cnt_mujer_51_64, cnt_mujer_gt_65) VALUES %s;"
         try:
@@ -111,7 +111,7 @@ def insert_data():
             if conn is not None:
                 conn.close()
     else:
-        print("Whitout data") 
+        print("Whitout data")    
 
 
 def recordGenerator():
@@ -169,19 +169,22 @@ def recordGenerator():
 
                 listRecordFlujo.append(getInfoCam(camId)+(income, outflows))
                 if OnlyGender:
-                    malesInRatio,femalesInRatio = reviewRatio(malesIn, femalesIn, income)
-                    malesOutRatio,femalesOutRatio = reviewRatio(malesOut, femalesOut, outflows)
+                    malesInRatio,femalesInRatio = reviewRatioGender(malesIn, femalesIn, income)
+                    malesOutRatio,femalesOutRatio = reviewRatioGender(malesOut, femalesOut, outflows)
                     listRecordAtributosIn.append(getInfoCam(camId) + ('ins',"","", malesInRatio,"","","","","", femalesInRatio,"","",""))
                     listRecordAtributosOut.append(getInfoCam(camId) + ('outs',"","", malesOutRatio,"","","","","",femalesOutRatio,"","",""))
                 else:
-                    listRecordAtributosIn.append(('ins',) + tuple(cnt_malesIn) + tuple(cnt_femalesIn))
-                    listRecordAtributosOut.append(('outs',) + tuple(cnt_malesOut) + tuple(cnt_femalesOut))
-    
+                    malesAgeInRatio, femalesAgeInRatio = reviewRatioAgeGender(cnt_malesIn,cnt_femalesIn,income)
+                    malesAgeOutRatio,femalesAgeOutRatio = reviewRatioAgeGender(cnt_malesOut,cnt_femalesOut,outflows)
+                    listRecordAtributosIn.append(getInfoCam(camId)+('ins',)+tuple(malesAgeInRatio)+tuple(femalesAgeInRatio))
+                    listRecordAtributosOut.append(getInfoCam(camId)+('outs',)+tuple(malesAgeOutRatio)+tuple(femalesAgeOutRatio))
+                    
+
     listDisaggregatedRecords.clear()
     setCameraId.clear()
     return listRecordFlujo,listRecordAtributosIn+listRecordAtributosOut
 
-def reviewRatio(maleCnt, femaleCnt, cntTotal):
+def reviewRatioGender(maleCnt, femaleCnt, cntTotal):
     femaleRatio = round((femaleCnt/(maleCnt + femaleCnt)) * cntTotal)
     maleRatio = round((maleCnt/(maleCnt + femaleCnt)) * cntTotal)
                         
@@ -191,11 +194,28 @@ def reviewRatio(maleCnt, femaleCnt, cntTotal):
             femaleRatio += int(dif/2)
             maleRatio += int(dif/2)
         else:
-            if femaleRatio + dif >=0:
+            if femaleRatio >= maleRatio:
                 femaleRatio += dif
             else:
                 maleRatio += dif
+                
     return maleRatio, femaleRatio
+
+def reviewRatioAgeGender(maleCnt, femaleCnt, cntTotalPerson):
+    maleRatios, femaleRatios, auxRatios= [], [], []
+    totalGender=sum(maleCnt+femaleCnt)
+    for count in maleCnt+femaleCnt:
+        auxRatios.append(round((count/totalGender)*cntTotalPerson))
+    totalAux = sum(auxRatios)
+    if totalAux != cntTotalPerson:
+        dif = cntTotalPerson - totalAux
+        auxRatios[auxRatios.index(max(auxRatios))] += dif
+    for index, count in enumerate(auxRatios):
+        if index < 6:
+            maleRatios.append(count)
+        else:
+            femaleRatios.append(count)
+    return maleRatios, femaleRatios
 
 def getInfoCam(camId):
     global jsonCamInfo
