@@ -22,7 +22,7 @@ timeToUpload = 15.0
 
 app = faust.App(
     "flujo",
-    broker='kafka://34.227.94.165:9092',
+    broker='kafka://-:9092',
     value_serializer='json',
 )
 main_topic = app.topic("roi")
