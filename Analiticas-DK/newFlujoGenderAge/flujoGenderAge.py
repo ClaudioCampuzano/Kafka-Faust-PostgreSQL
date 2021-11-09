@@ -76,15 +76,11 @@ async def loadTopostgreSQL():
 
 def insert_data():
     global param_dic, listRecordStandby, tableNameFlujo, tableNameAtributo
-    listRecordInsert = recordGenerator()
+    recordFlujo, recordAtributo = recordGenerator()
     
-    if listRecordInsert[0] or listRecordInsert[1] or listRecordStandby[0] or listRecordStandby[1]:
-        queryTextFlujo = "INSERT INTO {table}(id_cc, fecha, hora, acceso_id, nombre_comercial_acceso, piso, ins, outs, registro_id) VALUES %s;"
-        if OnlyGender:
-            queryTextAtributo = "INSERT INTO {table}(registro_id, tipo_acceso, cnt_hombre_1_10, cnt_hombre_11_18,cnt_hombre_19_35,cnt_hombre_36_50,cnt_hombre_51_64,cnt_hombre_gt_65, cnt_mujer_1_10, cnt_mujer_11_18, cnt_mujer_19_35, cnt_mujer_36_50, cnt_mujer_51_64, cnt_mujer_gt_65) VALUES %s;"
-        else:
-            queryTextAtributo = "INSERT INTO {table}(registro_id, tipo_acceso, cnt_hombre, cnt_mujer) VALUES %s;"
-
+    if recordFlujo or listRecordStandby or recordAtributo or listRecordStandby[1]:
+        queryTextFlujo = "INSERT INTO {table}(id_cc, fecha, hora, acceso_id, nombre_comercial_acceso, piso, ins, outs) VALUES %s;"
+        queryTextAtributo = "INSERT INTO {table}(id_cc, fecha, hora, acceso_id, nombre_comercial_acceso, piso, tipo_acceso, cnt_hombre_1_10, cnt_hombre_11_18,cnt_hombre_19_35,cnt_hombre_36_50,cnt_hombre_51_64,cnt_hombre_gt_65, cnt_mujer_1_10, cnt_mujer_11_18, cnt_mujer_19_35, cnt_mujer_36_50, cnt_mujer_51_64, cnt_mujer_gt_65) VALUES %s;"
         try:
             conn = connect(param_dic)
             if conn is None:
@@ -94,27 +90,28 @@ def insert_data():
             sqlQueryFlujo = sql.SQL(queryTextFlujo).format(table=sql.Identifier(tableNameFlujo))
             sqlQueryAtributo = sql.SQL(queryTextAtributo).format(table=sql.Identifier(tableNameAtributo))
 
-            extras.execute_values(cur, sqlQueryFlujo.as_string(cur), listRecordInsert[0]+listRecordStandby[0])
-            extras.execute_values(cur, sqlQueryAtributo.as_string(cur), listRecordInsert[1]+listRecordStandby[1])
+            extras.execute_values(cur, sqlQueryFlujo.as_string(cur), recordFlujo+listRecordStandby[0])
+            extras.execute_values(cur, sqlQueryAtributo.as_string(cur), recordAtributo+listRecordStandby[1])
 
             conn.commit()
 
             print("Inserting current data: "+str(cur.rowcount) +
                   " records inserted successfully")
-            if len(listRecordStandby) != 0:
+            if listRecordStandby[0] or listRecordStandby[1]:
                 print("Of the above information, " +
-                      str(len(listRecordStandby)) + " corresponds to old data")
+                      str(len(listRecordStandby[0])+len(listRecordStandby[1])) + " corresponds to old data")
                 listRecordStandby = []
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)
-            listRecordStandby += listRecordInsert
-            print("Saving information ("+str(len(listRecordInsert))+" records) for future use (" +
-                  str(len(listRecordStandby))+" total records in standby)")
+            listRecordStandby[0] += recordFlujo
+            listRecordStandby[1] += recordAtributo
+            print("Saving information ("+str(len(recordFlujo)+len(recordAtributo))+" records) for future use (" +
+                  str(len(listRecordStandby[0])+len(listRecordStandby[1]))+" total records in standby)")
         finally:
             if conn is not None:
                 conn.close()
     else:
-        print("Whitout data")   
+        print("Whitout data") 
 
 
 def recordGenerator():
@@ -169,28 +166,20 @@ def recordGenerator():
                                                 cnt_malesOut[indexA] += int(count)
                                             else:
                                                 cnt_femalesOut[indexA] += int(count)
-                    
-                
-                
-                now = datetime.now()
-                currentTime = now.strftime("%m/%d/%Y_%H:%M:%S")
-                record_id = str(jsonCamInfo['id_cc']) + "_" + str(camId) + "_" + str(currentTime)
 
-                listRecordFlujo.append(getInfoCam(camId)+(income, outflows, record_id))
+                listRecordFlujo.append(getInfoCam(camId)+(income, outflows))
                 if OnlyGender:
-                    
                     malesInRatio,femalesInRatio = reviewRatio(malesIn, femalesIn, income)
                     malesOutRatio,femalesOutRatio = reviewRatio(malesOut, femalesOut, outflows)
-                    
-                    listRecordAtributosIn.append((record_id,'ins') + (malesInRatio, femalesInRatio))
-                    listRecordAtributosOut.append((record_id,'outs') + (malesOutRatio,femalesOutRatio))
+                    listRecordAtributosIn.append(getInfoCam(camId) + ('ins',"","", malesInRatio,"","","","","", femalesInRatio,"","",""))
+                    listRecordAtributosOut.append(getInfoCam(camId) + ('outs',"","", malesOutRatio,"","","","","",femalesOutRatio,"","",""))
                 else:
-                    listRecordAtributosIn.append((record_id,'ins') + tuple(cnt_malesIn) + tuple(cnt_femalesIn))
-                    listRecordAtributosOut.append((record_id,'outs') + tuple(cnt_malesOut) + tuple(cnt_femalesOut))
+                    listRecordAtributosIn.append(('ins',) + tuple(cnt_malesIn) + tuple(cnt_femalesIn))
+                    listRecordAtributosOut.append(('outs',) + tuple(cnt_malesOut) + tuple(cnt_femalesOut))
     
     listDisaggregatedRecords.clear()
     setCameraId.clear()
-    return [listRecordFlujo,listRecordAtributosIn+listRecordAtributosOut]
+    return listRecordFlujo,listRecordAtributosIn+listRecordAtributosOut
 
 def reviewRatio(maleCnt, femaleCnt, cntTotal):
     femaleRatio = round((femaleCnt/(maleCnt + femaleCnt)) * cntTotal)
@@ -198,8 +187,14 @@ def reviewRatio(maleCnt, femaleCnt, cntTotal):
                         
     if femaleRatio + maleRatio != cntTotal:
         dif = cntTotal - (femaleRatio + maleRatio)
-        femaleRatio += dif
-        
+        if (dif%2 == 0 and femaleRatio + int(dif/2) >= 0 and maleRatio + int(dif/2) >= 0):
+            femaleRatio += int(dif/2)
+            maleRatio += int(dif/2)
+        else:
+            if femaleRatio + dif >=0:
+                femaleRatio += dif
+            else:
+                maleRatio += dif
     return maleRatio, femaleRatio
 
 def getInfoCam(camId):
