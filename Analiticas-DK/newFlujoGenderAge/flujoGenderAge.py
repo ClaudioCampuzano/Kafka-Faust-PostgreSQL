@@ -185,8 +185,8 @@ def recordGenerator():
     return listRecordFlujo,listRecordAtributosIn+listRecordAtributosOut
 
 def reviewRatioGender(maleCnt, femaleCnt, cntTotal):
-    femaleRatio = round((femaleCnt/(maleCnt + femaleCnt)) * cntTotal)
-    maleRatio = round((maleCnt/(maleCnt + femaleCnt)) * cntTotal)
+    femaleRatio = round((femaleCnt/(maleCnt + femaleCnt)) * cntTotal if int(cntTotal) else 0)
+    maleRatio = round((maleCnt/(maleCnt + femaleCnt)) * cntTotal if int(cntTotal) else 0)
                         
     if femaleRatio + maleRatio != cntTotal:
         dif = cntTotal - (femaleRatio + maleRatio)
@@ -205,7 +205,7 @@ def reviewRatioAgeGender(maleCnt, femaleCnt, cntTotalPerson):
     maleRatios, femaleRatios, auxRatios= [], [], []
     totalGender=sum(maleCnt+femaleCnt)
     for count in maleCnt+femaleCnt:
-        auxRatios.append(round((count/totalGender)*cntTotalPerson))
+        auxRatios.append(round((count/totalGender)*cntTotalPerson) if int(cntTotalPerson) else 0)
     totalAux = sum(auxRatios)
     if totalAux != cntTotalPerson:
         dif = cntTotalPerson - totalAux
