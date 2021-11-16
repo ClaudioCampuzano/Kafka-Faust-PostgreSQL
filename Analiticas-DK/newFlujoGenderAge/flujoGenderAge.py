@@ -35,7 +35,7 @@ with open("camarasInfo_flujo.json") as jsonFile:
 OnlyGender = False
 
 listDisaggregatedRecords = []
-listRecordStandby = []
+listRecordStandby = [[],[]]
 setCameraId = set()
 
 @app.agent(main_topic)
