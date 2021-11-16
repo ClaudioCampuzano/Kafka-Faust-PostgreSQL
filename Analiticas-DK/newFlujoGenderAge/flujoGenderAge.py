@@ -6,6 +6,7 @@ from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 from psycopg2 import extras
 from psycopg2 import sql
+import random
 
 thread_pool = ThreadPoolExecutor(max_workers=None)
 
@@ -204,17 +205,37 @@ def reviewRatioGender(maleCnt, femaleCnt, cntTotal):
 def reviewRatioAgeGender(maleCnt, femaleCnt, cntTotalPerson):
     maleRatios, femaleRatios, auxRatios= [], [], []
     totalGender=sum(maleCnt+femaleCnt)
-    for count in maleCnt+femaleCnt:
-        auxRatios.append(round((count/totalGender)*cntTotalPerson) if int(cntTotalPerson) else 0)
-    totalAux = sum(auxRatios)
-    if totalAux != cntTotalPerson:
-        dif = cntTotalPerson - totalAux
-        auxRatios[auxRatios.index(max(auxRatios))] += dif
-    for index, count in enumerate(auxRatios):
-        if index < 6:
-            maleRatios.append(count)
+    if int(cntTotalPerson):
+        if int(totalGender):
+            for count in maleCnt+femaleCnt:
+                auxRatios.append(round((count/totalGender)*cntTotalPerson))  
         else:
-            femaleRatios.append(count)
+            auxRatios = [-1] * 12
+    else:
+        auxRatios = [0] * 12
+        
+    totalAux = sum(auxRatios)
+    
+    if totalAux == -12:
+        if cntTotalPerson % 2 == 0:
+            maleRatios= [0,0,round(cntTotalPerson/2),0,0,0]
+            femaleRatios= [0,0,round(cntTotalPerson/2),0,0,0]
+        else:
+            if random.choice([0,1]) == 0:
+                maleRatios= [0,0,cntTotalPerson,0,0,0]
+                femaleRatios= [0] * 6
+            else: 
+                maleRatios= [0] * 6
+                femaleRatios= [0,0,cntTotalPerson,0,0,0]
+    else:
+        if totalAux != cntTotalPerson:
+            dif = cntTotalPerson - totalAux
+            auxRatios[auxRatios.index(max(auxRatios))] += dif
+        for index, count in enumerate(auxRatios):
+            if index < 6:
+                maleRatios.append(count)
+            else:
+                femaleRatios.append(count)
     return maleRatios, femaleRatios
 
 def getInfoCam(camId):
