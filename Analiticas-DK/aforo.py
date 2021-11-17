@@ -36,14 +36,18 @@ setZonesId = set()
 setCamerasId = set()
 listDisaggregatedRecords = []
 listRecordStandby = []
+currentTime = datetime.datetime.strptime('2000-01-01 00:00:00', '%Y-%m-%d %H:%M:%S')
 
 @app.agent(main_topic)
 async def streamRoiUnbundler(events):
-    global setZonesId, listDisaggregatedRecords, jsonCamInfo
+    global setZonesId, listDisaggregatedRecords, jsonCamInfo, currentTime
     
     async for event in events:
         keysEvent = [*event]
         if "roi_person" in keysEvent:
+            dateMsg = datetime.datetime.strptime(event["@timestamp"], '%Y-%m-%d %H:%M:%S')
+            if dateMsg > currentTime:
+                currentTime = dateMsg
             listCounts = [x for x in event['roi_person']['count'].split('|') if x]
             for index, count in enumerate(listCounts):
                 dictCamera = {}
@@ -122,10 +126,9 @@ def recordGenerator():
     return listRecordAforo
 
 def getInfoCam(zoneId):
-    global jsonCamInfo
-    now = datetime.now()
-    date = now.strftime("%m/%d/%Y")
-    time = now.strftime("%H:%M:%S")
+    global jsonCamInfo, currentTime
+    date = currentTime.strftime("%m/%d/%Y")
+    time = currentTime.strftime("%H:%M:%S")
     try:
         return(jsonCamInfo['id_cc'], date, time, zoneId, jsonCamInfo['zona'][zoneId])
     except:
