@@ -22,7 +22,7 @@ tableName = 'dev_aforo'
 
 app = faust.App(
     "aforo",
-    broker="kafka://34.227.94.165:9092",
+    broker="kafka://-:9092",
     value_serializer="json",
 )
 main_topic = app.topic("roi")
@@ -74,7 +74,7 @@ def insertData():
     global tableName, listRecordStandby
     listRecordInsert = recordGenerator()
     
-    """ if listRecordInsert:
+    if listRecordInsert:
         queryText = "INSERT INTO {table}(id_cc, fecha, hora, zona_id, zona, visitas) VALUES %s;"
         try:
             conn = connect(param_dic)
@@ -96,7 +96,7 @@ def insertData():
             if conn is not None:
                 conn.close()
     else:
-        print("Whitout data") """
+        print("Whitout data")
 
 
 def recordGenerator():
