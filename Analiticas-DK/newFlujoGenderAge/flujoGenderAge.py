@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from psycopg2 import extras
 from psycopg2 import sql
 import random
+import datetime 
 
 thread_pool = ThreadPoolExecutor(max_workers=None)
 
@@ -19,7 +20,7 @@ param_dic = {
 tableNameFlujo = 'dev_visitantes_totales'
 tableNameAtributo = 'dev_visitantes_totales_atributo'
 
-timeToUpload = 15.0
+timeToUpload = 10.0
 
 app = faust.App(
     "flujo",
@@ -37,14 +38,18 @@ OnlyGender = False
 listDisaggregatedRecords = []
 listRecordStandby = [[],[]]
 setCameraId = set()
+currentTime = datetime.datetime.strptime('2000-01-01 00:00:00', '%Y-%m-%d %H:%M:%S')
 
 @app.agent(main_topic)
 async def streamUnbundler(events):
-    global listDisaggregatedRecords, setCameraId, OnlyGender
+    global listDisaggregatedRecords, setCameraId, OnlyGender, currentTime
 
     async for event in events:
         keysEvent = [*event]
         if 'lc_person' in keysEvent:
+            dateMsg = datetime.datetime.strptime(event["@timestamp"], '%Y-%m-%d %H:%M:%S')
+            if dateMsg > currentTime:
+                currentTime = dateMsg
             dictCamera = {}
 
             listCounts = [x for x in event['lc_person']['count'].split('|') if x]
@@ -239,10 +244,9 @@ def reviewRatioAgeGender(maleCnt, femaleCnt, cntTotalPerson):
     return maleRatios, femaleRatios
 
 def getInfoCam(camId):
-    global jsonCamInfo
-    now = datetime.now()
-    date = now.strftime("%m/%d/%Y")
-    time = now.strftime("%H:%M:%S")
+    global jsonCamInfo, currentTime
+    date = currentTime.strftime("%m/%d/%Y")
+    time = currentTime.strftime("%H:%M:%S")
     try:
         return(jsonCamInfo['id_cc'], date, time, jsonCamInfo[str(camId)]['acceso_id'], jsonCamInfo[str(camId)]['nombre_comercial_acceso'], jsonCamInfo[str(camId)]['piso'])
     except:
