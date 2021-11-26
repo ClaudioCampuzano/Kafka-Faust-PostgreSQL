@@ -8,6 +8,7 @@ from psycopg2 import extras
 from psycopg2 import sql
 import random
 import datetime 
+import numpy as np
 
 thread_pool = ThreadPoolExecutor(max_workers=None)
 
