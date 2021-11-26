@@ -208,40 +208,46 @@ def reviewRatioGender(maleCnt, femaleCnt, cntTotal):
     return maleRatio, femaleRatio
 
 def reviewRatioAgeGender(maleCnt, femaleCnt, cntTotalPerson):
-    maleRatios, femaleRatios, auxRatios= [], [], []
+    auxRatios= []
     totalGender=sum(maleCnt+femaleCnt)
     if int(cntTotalPerson):
-        if int(totalGender):
+        if totalGender:
             for count in maleCnt+femaleCnt:
                 auxRatios.append(round((count/totalGender)*cntTotalPerson))  
         else:
             auxRatios = [-1] * 12
     else:
-        auxRatios = [0] * 12
+        return [0]*6, [0]*6
         
-    totalAux = sum(auxRatios)
-    
-    if totalAux == -12:
+    if -1 in auxRatios:
         if cntTotalPerson % 2 == 0:
-            maleRatios= [0,0,round(cntTotalPerson/2),0,0,0]
-            femaleRatios= [0,0,round(cntTotalPerson/2),0,0,0]
+            maleRatio = [0,0,round(cntTotalPerson/2),0,0,0]
+            femaleRatios = [0,0,round(cntTotalPerson/2),0,0,0]
         else:
             if random.choice([0,1]) == 0:
-                maleRatios= [0,0,cntTotalPerson,0,0,0]
-                femaleRatios= [0] * 6
+                maleRatios = [0,0,cntTotalPerson,0,0,0]
+                femaleRatios = [0] * 6
             else: 
-                maleRatios= [0] * 6
-                femaleRatios= [0,0,cntTotalPerson,0,0,0]
+                femaleRatios = [0,0,cntTotalPerson,0,0,0]
+                maleRatios = [0] * 6
     else:
-        if totalAux != cntTotalPerson:
-            dif = cntTotalPerson - totalAux
-            auxRatios[auxRatios.index(max(auxRatios))] += dif
-        for index, count in enumerate(auxRatios):
-            if index < 6:
-                maleRatios.append(count)
+        if sum(auxRatios) != cntTotalPerson:
+            dif = cntTotalPerson - sum(auxRatios)
+            if dif > 0:
+                auxRatios[np.argmin(auxRatios)] += dif                    
             else:
-                femaleRatios.append(count)
-    return maleRatios, femaleRatios
+                auxRatios = recusiveRevisor(auxRatios, dif)
+            
+    return auxRatios[0:6], auxRatios[6:12]
+
+def recusiveRevisor(auxRatios, dif):
+    indexMax = np.argmax(auxRatios)
+    auxRatios[indexMax] += dif
+    if auxRatios[indexMax] < 0:
+        difR = auxRatios[indexMax]
+        auxRatios[indexMax] = 0
+        auxRatios = recusiveRevisor(auxRatios,difR)
+    return auxRatios
 
 def getInfoCam(camId):
     global jsonCamInfo, currentTime
