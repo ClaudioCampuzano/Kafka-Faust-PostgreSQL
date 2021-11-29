@@ -107,7 +107,7 @@ def insert_data():
             if listRecordStandby[0] or listRecordStandby[1]:
                 print("Of the above information, " +
                       str(len(listRecordStandby[0])+len(listRecordStandby[1])) + " corresponds to old data")
-                listRecordStandby = []
+                listRecordStandby = [[],[]]
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)
             listRecordStandby[0] += recordFlujo
