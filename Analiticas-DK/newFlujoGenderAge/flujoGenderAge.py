@@ -183,8 +183,8 @@ def recordGenerator():
                 else:
                     malesAgeInRatio, femalesAgeInRatio = reviewRatioAgeGender(cnt_malesIn,cnt_femalesIn,income)
                     malesAgeOutRatio,femalesAgeOutRatio = reviewRatioAgeGender(cnt_malesOut,cnt_femalesOut,outflows)
-                    listRecordAtributosIn.append(getInfoCam(camId)+tuple('ins')+tuple(malesAgeInRatio)+tuple(femalesAgeInRatio))
-                    listRecordAtributosOut.append(getInfoCam(camId)+tuple('outs')+tuple(malesAgeOutRatio)+tuple(femalesAgeOutRatio))
+                    listRecordAtributosIn.append(getInfoCam(camId)+tuple(['ins'])+tuple(malesAgeInRatio)+tuple(femalesAgeInRatio))
+                    listRecordAtributosOut.append(getInfoCam(camId)+tuple(['outs'])+tuple(malesAgeOutRatio)+tuple(femalesAgeOutRatio))
                     
 
     listDisaggregatedRecords.clear()
