@@ -45,9 +45,7 @@ async def streamRoiUnbundler(events):
     async for event in events:
         keysEvent = [*event]
         if "roi_person" in keysEvent:
-            dateMsg = datetime.datetime.strptime(event["@timestamp"], '%Y-%m-%d %H:%M:%S')
-            if dateMsg > currentTime:
-                currentTime = dateMsg
+            currentTime = datetime.datetime.strptime(event["@timestamp"], '%Y-%m-%d %H:%M:%S')
             listCounts = [x for x in event['roi_person']['count'].split('|') if x]
             for index, count in enumerate(listCounts):
                 dictCamera = {}
