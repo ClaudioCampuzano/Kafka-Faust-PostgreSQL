@@ -21,7 +21,7 @@ param_dic = {
 tableNameFlujo = 'ingreso_persona'
 tableNameAtributo = 'ingreso_persona_atributo_2'
 
-timeToUpload = 15.0
+timeToUpload = 60.0
 
 app = faust.App(
     "flujo",
