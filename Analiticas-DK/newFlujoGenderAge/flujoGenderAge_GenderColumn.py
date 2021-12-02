@@ -47,9 +47,7 @@ async def streamUnbundler(events):
     async for event in events:
         keysEvent = [*event]
         if 'lc_person' in keysEvent:
-            dateMsg = datetime.datetime.strptime(event["@timestamp"], '%Y-%m-%d %H:%M:%S')
-            if dateMsg > currentTime:
-                currentTime = dateMsg
+            currentTime = datetime.datetime.strptime(event["@timestamp"], '%Y-%m-%d %H:%M:%S')
             dictCamera = {}
 
             listCounts = [x for x in event['lc_person']['count'].split('|') if x]
