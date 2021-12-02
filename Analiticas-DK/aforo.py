@@ -109,8 +109,11 @@ def recordGenerator():
             if listFiltered_camId:
                 for zoneId in setZonesId:
                     listcount_zoneId = [int(e["count"]) for e in listFiltered_camId if zoneId == e['zona_id']]
-                    prom_count = numpy.mean(listcount_zoneId)
-                    if numpy.isnan(prom_count):
+                    if listcount_zoneId:
+                        prom_count = numpy.mean(listcount_zoneId)
+                        if numpy.isnan(prom_count):
+                            prom_count = 0
+                    else:
                         prom_count = 0
                     if zoneId in recordAforo.keys():
                         recordAforo[zoneId] += round(prom_count)
