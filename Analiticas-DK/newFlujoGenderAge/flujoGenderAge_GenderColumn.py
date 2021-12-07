@@ -61,7 +61,7 @@ async def streamUnbundler(events):
                     dictCamera[keyGender] = genderList
 
                 if keyGender+'_details' in subKeysEvent:
-                    for keyAge in ['age_1_10','age_11_18','age_19_35','age_36_50','age_51_64','age_GTE_65']:
+                    for keyAge in ['age_1_18','age_19_50','age_GTE_50']:
                         ageList = [x for x in event['lc_person'][keyGender+'_details'][keyAge].split('|') if x]
                         dictCamera[keyGender+'-'+keyAge] = ageList
 
@@ -82,7 +82,7 @@ def insert_data():
 
     if recordFlujo or recordAtributo or listRecordStandby[0] or listRecordStandby[1]:
         queryTextFlujo = "INSERT INTO {table}(id_cc, fecha, hora, acceso_id, nombre_comercial_acceso, piso, ins, outs) VALUES %s;"
-        queryTextAtributo = "INSERT INTO {table}(id_cc, fecha, hora, acceso_id, nombre_comercial_acceso, piso, tipo_acceso, males, females, cnt_hombre_1_10, cnt_hombre_11_18,cnt_hombre_19_35,cnt_hombre_36_50,cnt_hombre_51_64,cnt_hombre_gt_65, cnt_mujer_1_10, cnt_mujer_11_18, cnt_mujer_19_35, cnt_mujer_36_50, cnt_mujer_51_64, cnt_mujer_gt_65) VALUES %s;"
+        queryTextAtributo = "INSERT INTO {table}(id_cc, fecha, hora, acceso_id, nombre_comercial_acceso, piso, tipo_acceso, males, females, cnt_hombre_1_18, cnt_hombre_19_50, cnt_hombre_gt_50, cnt_mujer_1_18, cnt_mujer_19_50, cnt_mujer_gt_50) VALUES %s;"
         try:
             conn = connect(param_dic)
             if conn is None:
@@ -144,7 +144,7 @@ def recordGenerator():
                                 else:
                                     femalesIn += int(count)
 
-                        for indexA, keyAge in enumerate(['age_1_10','age_11_18','age_19_35','age_36_50','age_51_64','age_GTE_65']):
+                        for indexA, keyAge in enumerate(['age_1_18','age_19_50','age_GTE_50']):
                             nameKey = keyGender+'-'+keyAge
                             if nameKey in record:
                                 for index, count in enumerate(record[nameKey]):
@@ -179,8 +179,8 @@ def connect(params_dic):
         print(end=" ")
     #print("Connection successful PostgreSQL")
     return conn
-
-def reviewRatioGender(maleCnt, femaleCnt, cntTotal):
+    
+"""def reviewRatioGender(maleCnt, femaleCnt, cntTotal):
     femaleRatio = round((femaleCnt/(maleCnt + femaleCnt)) * cntTotal if int(cntTotal) else 0)
     maleRatio = round((maleCnt/(maleCnt + femaleCnt)) * cntTotal if int(cntTotal) else 0)
 
@@ -236,13 +236,4 @@ def recusiveRevisor(auxRatios, dif):
         difR = auxRatios[indexMax]
         auxRatios[indexMax] = 0
         auxRatios = recusiveRevisor(auxRatios,difR)
-    return auxRatios
-
-def getInfoCam(camId):
-    global jsonCamInfo, currentTime
-    date = currentTime.strftime("%m/%d/%Y")
-    time = currentTime.strftime("%H:%M:%S")
-    try:
-        return(jsonCamInfo['id_cc'], date, time, jsonCamInfo[str(camId)]['acceso_id'], jsonCamInfo[str(camId)]['nombre_comercial_acceso'], jsonCamInfo[str(camId)]['piso'])
-    except:
-        return("-1", date, time, "---", "---", "---")
+    return auxRatios"""
