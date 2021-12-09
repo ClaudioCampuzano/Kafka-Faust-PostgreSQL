@@ -127,7 +127,7 @@ def recordGenerator():
                 income, outflows = 0, 0
                 malesIn, femalesIn = 0,0
                 ## ['age_1_10','age_11_18','age_19_35','age_36_50','age_51_64'][,'age_GTE_65'[in,out]
-                cnt_malesIn, cnt_femalesIn = ([0]*6 for i in range(2))
+                cnt_malesIn, cnt_femalesIn = ([0]*3 for i in range(2))
 
                 for record in listFiltered:
                     for index, count in enumerate(record['counter']):
