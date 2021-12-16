@@ -129,7 +129,7 @@ def recordGenerator():
 
 def getInfoCam(zoneId):
     global jsonCamInfo, currentTime
-    date = currentTime.strftime("%m/%d/%Y")
+    date = currentTime.strftime("%d/%m/%Y")
     time = currentTime.strftime("%H:%M:%S")
     try:
         return(jsonCamInfo['id_cc'], date, time, zoneId, jsonCamInfo['zona'][zoneId])
